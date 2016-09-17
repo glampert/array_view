@@ -20,12 +20,18 @@
 #ifndef ARRAY_VIEW_HPP
 #define ARRAY_VIEW_HPP
 
-#include <cstddef>
-#include <cstdint>
-#include <utility>
-#include <iterator>
-#include <algorithm>
-#include <type_traits>
+// Defining this before including the file prevents pulling the Standard headers.
+// Useful to be able to place this file inside a user-defined namespace or to simply
+// avoid redundant inclusions. User is responsible for providing all the necessary
+// Standard headers before #including this one.
+#ifndef ARRAY_VIEW_NO_STD_INCLUDES
+    #include <cstddef>
+    #include <cstdint>
+    #include <utility>
+    #include <iterator>
+    #include <algorithm>
+    #include <type_traits>
+#endif // ARRAY_VIEW_NO_STD_INCLUDES
 
 // ========================================================
 // Configuration switches:
@@ -58,13 +64,17 @@
 // You're free to redefine this macro and supply your own error handling strategy.
 #ifndef ARRAY_VIEW_ERROR
     #if ARRAY_VIEW_USE_CXX_EXCEPTIONS
-        #include <string>
-        #include <stdexcept>
+        #ifndef ARRAY_VIEW_NO_STD_INCLUDES
+            #include <string>
+            #include <stdexcept>
+        #endif // ARRAY_VIEW_NO_STD_INCLUDES
         #define ARRAY_VIEW_ERROR(message) \
             throw std::runtime_error{ std::string(__FILE__) + "(" + std::to_string(__LINE__) + "): " + std::string(message) }
     #else // !ARRAY_VIEW_USE_CXX_EXCEPTIONS
-        #include <cstdlib>
-        #include <iostream>
+        #ifndef ARRAY_VIEW_NO_STD_INCLUDES
+            #include <cstdlib>
+            #include <iostream>
+        #endif // ARRAY_VIEW_NO_STD_INCLUDES
         #define ARRAY_VIEW_ERROR(message) \
             (std::cerr << __FILE__ << "(" << __LINE__ << "): " << message << std::endl, std::abort())
     #endif // ARRAY_VIEW_USE_CXX_EXCEPTIONS
@@ -81,11 +91,11 @@ constexpr std::size_t array_size(const ArrayType (&)[ArraySize]) noexcept
 // template class array_iterator_base and friends:
 // ========================================================
 
-namespace detail
+namespace array_view_detail
 {
     struct mutable_iterator_tag { };
     struct const_iterator_tag   { };
-} // namespace detail {}
+} // namespace array_view_detail {}
 
 template
 <
@@ -276,9 +286,9 @@ public:
     // One way conversion from mutable_iterator to const_iterator:
     //
 
-    operator array_iterator_base<const value_type, const parent_type, detail::const_iterator_tag>() const noexcept
+    operator array_iterator_base<const value_type, const parent_type, array_view_detail::const_iterator_tag>() const noexcept
     {
-        return array_iterator_base<const value_type, const parent_type, detail::const_iterator_tag>{ m_parent_array, m_current_index };
+        return array_iterator_base<const value_type, const parent_type, array_view_detail::const_iterator_tag>{ m_parent_array, m_current_index };
     }
 
     //
@@ -367,8 +377,8 @@ public:
     using const_pointer          = typename std::add_pointer<const value_type>::type;
     using const_reference        = typename std::add_lvalue_reference<const value_type>::type;
 
-    using iterator               = array_iterator_base<value_type, array_view, detail::mutable_iterator_tag>;
-    using const_iterator         = array_iterator_base<const value_type, const array_view, detail::const_iterator_tag>;
+    using iterator               = array_iterator_base<value_type, array_view, array_view_detail::mutable_iterator_tag>;
+    using const_iterator         = array_iterator_base<const value_type, const array_view, array_view_detail::const_iterator_tag>;
     using reverse_iterator       = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
