@@ -70,14 +70,19 @@
         #endif // ARRAY_VIEW_NO_STD_INCLUDES
         #define ARRAY_VIEW_ERROR(message) \
             throw std::runtime_error{ std::string(__FILE__) + "(" + std::to_string(__LINE__) + "): " + std::string(message) }
-    #else // !ARRAY_VIEW_USE_CXX_EXCEPTIONS
+    #elif ARRAY_VIEW_USE_ASSERTS
+        #ifndef ARRAY_VIEW_NO_STD_INCLUDES
+            #include <cassert>
+        #endif // ARRAY_VIEW_NO_STD_INCLUDES
+        #define ARRAY_VIEW_ERROR(message) assert(false && message)
+    #else // !ARRAY_VIEW_USE_CXX_EXCEPTIONS && !ARRAY_VIEW_USE_ASSERTS
         #ifndef ARRAY_VIEW_NO_STD_INCLUDES
             #include <cstdlib>
             #include <iostream>
         #endif // ARRAY_VIEW_NO_STD_INCLUDES
         #define ARRAY_VIEW_ERROR(message) \
             (std::cerr << __FILE__ << "(" << __LINE__ << "): " << message << std::endl, std::abort())
-    #endif // ARRAY_VIEW_USE_CXX_EXCEPTIONS
+    #endif // ARRAY_VIEW_USE_CXX_EXCEPTIONS or ARRAY_VIEW_USE_ASSERTS or std::cerr
 #endif // ARRAY_VIEW_ERROR
 
 // Size in items of statically declared C-style arrays.
